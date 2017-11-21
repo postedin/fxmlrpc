@@ -68,7 +68,8 @@ final class Client implements ClientInterface
         $uri = null,
         TransportInterface $transport = null,
         ParserInterface $parser = null,
-        SerializerInterface $serializer = null
+        SerializerInterface $serializer = null,
+        $trimResponse = true
     )
     {
         $this->uri = $uri;
@@ -76,6 +77,7 @@ final class Client implements ClientInterface
             ?: new HttpAdapterTransport(MessageFactoryDiscovery::find(), HttpClientDiscovery::find());
         $this->parser = $parser ?: new XmlReaderParser();
         $this->serializer = $serializer ?: new XmlWriterSerializer();
+        $this->trimResponse = (bool) $trimResponse;
     }
 
     /**
@@ -152,6 +154,10 @@ final class Client implements ClientInterface
         $params = array_merge($this->prependParams, $params, $this->appendParams);
         $payload = $this->serializer->serialize($methodName, $params);
         $response = $this->transport->send($this->uri, $payload);
+
+        if ($this->trimResponse) {
+            $response = trim($response);
+        }
 
         return $this->parser->parse($response);
     }
